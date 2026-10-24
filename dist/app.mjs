@@ -18,3 +18,22 @@ const stride=Math.max(1,Math.ceil(pts.length/4000));let path='',segment=false;pt
 $('chart').innerHTML=`<svg viewBox="0 0 720 300" role="img" aria-label="${tab==='lsv'?'LSV':'Tafel'} 数据曲线"><g>${grid}</g><g font-size="9" fill="#91a0af" font-family="sans-serif">${labels}<text x="370" y="291" text-anchor="middle">${tab==='lsv'?'补偿电位 F / V':'log₁₀ |E| / (mA·cm⁻²)'}</text><text transform="translate(12 140) rotate(-90)" text-anchor="middle">${tab==='lsv'?'电流密度 E / mA·cm⁻²':'−F / V'}</text></g><path d="${path}" fill="none" stroke="#0a9385" stroke-width="2.3" stroke-linejoin="round"/></svg>`;}
 function download(tafel){if(!result)return;const url=URL.createObjectURL(new Blob([output(result.data,tafel)],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name+(tafel?'Tafel.txt':'_处理后.txt');a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 $('export-lsv').onclick=()=>download(false);$('export-tafel').onclick=()=>download(true);
+
+const labDialog=document.getElementById("xu-lab-dialog");
+document.getElementById("xu-lab-open").onclick=()=>labDialog.showModal();
+document.getElementById("xu-lab-close").onclick=()=>labDialog.close();
+labDialog.addEventListener("click",e=>{if(e.target!==labDialog)return;const r=labDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)labDialog.close();});
+
+document.querySelectorAll('[data-copy-voltage]').forEach(button=>{
+  button.addEventListener('click',()=>{
+    const value=button.dataset.copyVoltage;
+    const input=$('voltage');
+    if(input.value!==value){
+      input.value=value;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      status(`已应用 Xu Lab 电压修正值 ${value} V，请重新处理。`);
+    }
+    labDialog.close();
+    input.focus();
+  });
+});
