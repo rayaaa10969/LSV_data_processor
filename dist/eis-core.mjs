@@ -2,12 +2,13 @@ export function parseEIS(text, columns = [0, 1, 2], auto = true) {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const split = line => line.trim().split(/[,;\t]+/).map(s => s.trim());
   const finite = s => s !== undefined && s !== '' && Number.isFinite(Number(s));
-  const header = lines.findIndex(line => /freq/i.test(line) && /(?:imag|z''|zim)/i.test(line));
+  const isImaginary = s => /imag|z''|z"|zim/i.test(s);
+  const header = lines.findIndex(line => /freq/i.test(line) && isImaginary(line));
   if (auto && header >= 0) {
     const names = split(lines[header]);
     const f = names.findIndex(s => /freq/i.test(s));
-    const im = names.findIndex(s => /imag|z''|zim/i.test(s));
-    const re = names.findIndex(s => /real|zre|z'(?!')/i.test(s) && !/imag|z''/i.test(s));
+    const im = names.findIndex(isImaginary);
+    const re = names.findIndex(s => /real|zre|z'(?!')/i.test(s) && !isImaginary(s));
     if ([f,re,im].every(i => i >= 0)) columns = [f,re,im];
   }
   const rows = []; let started = false;

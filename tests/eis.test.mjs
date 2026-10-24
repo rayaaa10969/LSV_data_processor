@@ -21,3 +21,17 @@ test('header mappings, BOM, manual columns and scientific notation',()=>{
  assert.equal(parseEIS('\uFEFFZimag/ohm,Frequency/Hz,Zreal/ohm\n-2,1e3,15')[0].x,15);
  assert.equal(parseEIS('3;4;5',[2,0,1],false)[0].x,3);
 });
+
+for (const imaginary of ["Z''/ohm", 'Z"/ohm']) {
+ test(`CHI760E 表头 ${imaginary} 正确识别、跳过抬头并自动映射乱序列`,()=>{
+  const text = `Instrument Model: CHI760E\n100,200,300\nFreq/Hz, Z'/ohm, ${imaginary}, Z/ohm, Phase/deg\n\n1000,4,2,4.47,26.6\n100,6,-2,6.32,-18.4`;
+  const expected = [{f:1000,x:4,y:2,line:5},{f:100,x:6,y:-2,line:6}];
+  assert.deepEqual(parseEIS(text),expected);
+  const reordered = `Instrument Model: CHI760E\n100,200,300\n${imaginary}, Phase/deg, Z'/ohm, Freq/Hz\n\n2,26.6,4,1000\n-2,-18.4,6,100`;
+  assert.deepEqual(parseEIS(reordered),expected);
+  assert.equal(intersections(parseEIS(reordered))[0].x,5);
+  // Explicit manual mapping must still override recognized column labels.
+  assert.deepEqual(parseEIS(reordered,[3,2,0],false),expected);
+  assert.equal(parseEIS(reordered,[0,2,3],false)[0].f,2);
+ });
+}
