@@ -51,3 +51,21 @@ export function selectedResistance(points,left,right) {
   return {rs:rs.x,total:total?.x??null,rct:total?total.x-rs.x:null};
 }
 
+
+export function eisGuidance(hasData, count, rs, total) {
+  if (!hasData) return {
+    import: '先选择 EIS 文件，读取后即可查看曲线。', curve: '', selection: '', next: ''
+  };
+  if (!count) return {
+    import: '数据已读取，可在下方浏览曲线。',
+    curve: '未找到实轴交点，可放大零轴附近检查。',
+    selection: '当前没有可选截点，请确认数据列和测量范围。',
+    next: '可导出当前数据记录；尚无法通过截点确定 Rs。'
+  };
+  return {
+    import: '数据已就绪，接下来查看曲线中的候选截点。',
+    curve: '点击截点，在下方表格中确认角色。',
+    selection: rs === null ? '先指定 Rs；右截点可选。' : total === null ? 'Rs 已选定；可继续指定右截点计算 Rct。' : '两个截点已选定，可随时调整。',
+    next: rs === null ? '确认 Rs 后，即可应用到 LSV。' : total === null ? 'Rs 已确认，可应用到 LSV；也可继续选择右截点计算 Rct。' : 'Rs 与 Rct 已确定，可导出结果或返回 LSV。'
+  };
+}

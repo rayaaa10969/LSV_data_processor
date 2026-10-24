@@ -1,4 +1,4 @@
-import {parseEIS,intersections,selectedResistance} from './eis-core.mjs';
+import {parseEIS,intersections,selectedResistance,eisGuidance} from './eis-core.mjs';
 const $=id=>document.getElementById(id), fmt=n=>n===null?'未确定':Number(n.toPrecision(8)).toString();
 let rows=[],points=[],left=null,right=null,focus=null,raw='',filename='',view=null,token=0;
 function page(eis){$('lsv-page').hidden=eis;$('eis-page').hidden=!eis;$('nav-lsv').setAttribute('aria-current',eis?'false':'page');$('nav-eis').setAttribute('aria-current',eis?'page':'false');if(eis)draw();}
@@ -7,6 +7,10 @@ $('nav-eis').onclick=$('open-eis').onclick=()=>page(true);page(false);
 function message(text){$('eis-status').textContent=text;}
 function refresh(){
   let result;try{result=selectedResistance(points,left,right);}catch(e){message(e.message);return;}
+  const hints=eisGuidance(rows.some(Boolean),points.length,result.rs,result.total);
+  for(const [key,id] of Object.entries({import:'eis-import-hint',curve:'eis-curve-hint',selection:'eis-selection-hint',next:'eis-next-hint'})) {
+    $(id).textContent=hints[key];$(id).hidden=!hints[key];
+  }
   $('eis-rs').textContent=fmt(result.rs);$('eis-total').textContent=fmt(result.total);$('eis-rct').textContent=fmt(result.rct);
   $('eis-apply').disabled=result.rs===null;$('eis-export').disabled=!rows.some(Boolean);
   $('eis-candidates').replaceChildren(...points.map(p=>{
@@ -15,7 +19,7 @@ function refresh(){
     const td=document.createElement('td');['Rs','右截点'].forEach((role,i)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=(i?right:left)===p.id?`✓ ${role}`:`设为 ${role}`;b.setAttribute('aria-pressed',String((i?right:left)===p.id));b.onclick=()=>{
       const l=i?left:p.id,r=i?p.id:right;
       if(i&&l===null){message('请先选择 Rs。');return;}
-      try{selectedResistance(points,l,r);left=l;right=r;focus=p.id;message('已更新选择。只有 Rs 时也可以应用到 LSV。');refresh();}catch(e){message(e.message);}
+      try{selectedResistance(points,l,r);left=l;right=r;focus=p.id;message('');refresh();}catch(e){message(e.message);}
     };td.append(b);});tr.append(td);return tr;
   }));
   if(!points.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent=rows.length?'未发现实轴交点，可继续浏览曲线。':'请先导入 EIS 文件。';tr.append(td);$('eis-candidates').append(tr);}draw();
