@@ -25,13 +25,25 @@ function ingest(manual=false){left=right=focus=null;rows=[];points=[];view=null;
  if(cols.some(c=>!Number.isInteger(c)||c<0)||new Set(cols).size!==3)throw Error('请选择三个不同的有效列号。');
  rows=parseEIS(raw,cols,!manual);points=intersections(rows);message(`已读取 ${rows.filter(Boolean).length} 个采样点，找到 ${points.length} 个候选截点。请人工确认。`);
  }catch(e){message(e.message);}refresh();}
+$('eis-import').onclick=()=>$('eis-file').click();
 $('eis-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const version=++token;raw='';filename=file.name;rows=[];points=[];left=right=focus=null;view=null;refresh();$('eis-file-info').textContent=`${filename} · 正在读取…`;try{if(file.size>20*1024*1024)throw Error('文件超过 20 MB。');const text=await file.text();if(version!==token)return;raw=text;$('eis-file-info').textContent=filename;ingest();}catch(err){if(version===token){$('eis-file-info').textContent='读取失败';message(err.message);}}};
 $('eis-reparse').onclick=()=>{if(raw)ingest(true);else message('请先导入文件。');};
 $('eis-demo').onclick=()=>{token++;filename='EIS_demo.txt';raw='Frequency/Hz,Zreal/ohm,Zimag/ohm\n100000,4,2\n50000,6,-2\n10000,10,-8\n1000,20,-10\n100,30,-8\n10,34,-2\n1,36,2';$('eis-file-info').textContent=filename;ingest();};
 $('eis-clear').onclick=()=>{left=right=focus=null;message('已清除选择。');refresh();};
 $('eis-sign').onchange=()=>{view=null;draw();};$('eis-reset').onclick=()=>{view=null;draw();};
 $('eis-zero').onclick=()=>{view=null;draw();if(view){const span=(view[3]-view[2])*.12;view[2]=-span;view[3]=span;draw();}};
-$('eis-apply').onclick=()=>{const r=selectedResistance(points,left,right);if(r.rs===null)return;const input=$('resistance'),changed=Number(input.value)!==r.rs||!input.value.trim();input.value=String(r.rs);if(changed)input.dispatchEvent(new Event('input',{bubbles:true}));$('rs-source').textContent=`来自 ${filename} · P${left+1} · Rs = ${fmt(r.rs)} Ω`;page(false);input.focus();};
+$('eis-apply').onclick=async()=>{
+ const r=selectedResistance(points,left,right);if(r.rs===null)return;
+ const value=String(r.rs),source=`来自 ${filename} · P${left+1} · Rs = ${fmt(r.rs)} Ω`;
+ const input=$('resistance'),changed=Number(input.value)!==r.rs||!input.value.trim();
+ // Start clipboard access directly within the click gesture; apply Rs even if permission is denied.
+ let copied=false;
+ let copying;try{copying=navigator.clipboard?.writeText(value);}catch{}
+ input.value=value;if(changed)input.dispatchEvent(new Event('input',{bubbles:true}));
+ $('rs-source').textContent=source;page(false);input.focus();
+ try{if(copying){await copying;copied=true;}}catch{}
+ if(input.value===value){$('rs-source').textContent=source+(copied?' · 已复制到剪贴板':' · 剪贴板不可用，请从输入框手动复制');}
+};
 $('resistance').addEventListener('input',()=>{$('rs-source').textContent='';});
 $('demo').addEventListener('click',()=>{$('rs-source').textContent='';});
 $('eis-export').onclick=()=>{const r=selectedResistance(points,left,right);const csv=[['文件',filename],['Rs / ohm',r.rs??'未确定'],['Rs+Rct / ohm',r.total??'未确定'],['Rct / ohm',r.rct??'未确定'],['方法','相邻点线性插值；零轴区间仅列出端点；Rct 适用于相应简单等效电路'],['编号','Zreal / ohm','起始行','结束行','频率1 / Hz','频率2 / Hz','方式','角色'],...points.map(p=>[`P${p.id+1}`,p.x,p.line,p.endLine,p.f1,p.f2,p.kind,p.id===left?'Rs':p.id===right?'Rs+Rct':''])].map(row=>row.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');const url=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=filename.replace(/\.[^.]+$/,'')+'_EIS.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
