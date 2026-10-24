@@ -2,8 +2,10 @@
 
 无需第三方依赖的浏览器端 LSV 数据处理应用。所有上传文件只在设备本地处理。
 
-运行：`node server.mjs`，访问 http://127.0.0.1:5173 。验证：`node --test tests/core.test.mjs`。npm 可用时也支持 `npm start` 与 `npm test`。
+运行：`node server.mjs`，访问 http://127.0.0.1:5173 。运行全部测试：`node --test tests/*.test.mjs`。npm 可用时也支持 `npm start` 与 `npm test`。
 也可以将 dist 目录发布到任意静态网站托管。
+
+测试使用 Node.js 内置测试工具，无需安装依赖。覆盖文件解析、手算样本的基线与 iR 补偿、Tafel 近零阈值、参数校验、TXT 完整导出，以及 Vercel 静态构建成功和缺失文件失败的场景。构建测试在临时目录执行，不修改实际部署产物。这些测试不包含浏览器交互或线上部署验证。
 
 导入逗号分隔的 TXT/CSV，填写电压修正值 V、电极面积 S（cm²）和溶液电阻 Rs（Ω），点击开始处理。分别下载原文件名_处理后.txt 与原文件名Tafel.txt。
 
