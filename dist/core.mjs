@@ -18,4 +18,4 @@ export function compute(rows,V,S,Rs) {
   return {data,index,baseline};
 }
 export const numberText = n => n===-Infinity?'-inf':String(n);
-export function output(data,tafel=false) {return data.map(r=>tafel?`${numberText(r.t1)},${numberText(r.t2)}`:`${numberText(r.f)},${numberText(r.e)}`).join('\n')+'\n';}
+export function output(data,tafel=false) {return data.map(r=>tafel?`${numberText(r.t2)},${numberText(r.t1)}`:`${numberText(r.f)},${numberText(r.e)}`).join('\n')+'\n';}
