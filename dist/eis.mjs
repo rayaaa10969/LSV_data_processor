@@ -22,7 +22,7 @@ function refresh(){
       try{selectedResistance(points,l,r);left=l;right=r;focus=p.id;message('');refresh();}catch(e){message(e.message);}
     };td.append(b);});tr.append(td);return tr;
   }));
-  if(!points.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent=rows.length?'未发现实轴交点，可继续浏览曲线。':'请先导入 EIS 文件。';tr.append(td);$('eis-candidates').append(tr);}draw();
+  if(!points.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent=rows.length?'未发现实轴交点，可继续浏览曲线。':'请先导入 EIS 文件。';tr.append(td);$('eis-candidates').append(tr);}draw();window.dispatchEvent(new CustomEvent('lsv-project-current-eis',{detail:{filename,rows,points,left,right,selectedResistance:result,sign:$('eis-sign').checked?-1:1}}));
 }
 function ingest(manual=false){left=right=focus=null;rows=[];points=[];view=null;try{
  const cols=['eis-fcol','eis-xcol','eis-ycol'].map(id=>Number($(id).value)-1);
@@ -30,7 +30,8 @@ function ingest(manual=false){left=right=focus=null;rows=[];points=[];view=null;
  rows=parseEIS(raw,cols,!manual);points=intersections(rows);message(`已读取 ${rows.filter(Boolean).length} 个采样点，找到 ${points.length} 个候选截点。请人工确认。`);
  }catch(e){message(e.message);}refresh();}
 $('eis-import').onclick=()=>$('eis-file').click();
-$('eis-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const version=++token;raw='';filename=file.name;rows=[];points=[];left=right=focus=null;view=null;refresh();$('eis-file-info').textContent=`${filename} · 正在读取…`;try{if(file.size>20*1024*1024)throw Error('文件超过 20 MB。');const text=await file.text();if(version!==token)return;raw=text;$('eis-file-info').textContent=filename;ingest();}catch(err){if(version===token){$('eis-file-info').textContent='读取失败';message(err.message);}}};
+$('eis-file').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;const version=++token;raw='';filename=file.name;rows=[];points=[];left=right=focus=null;view=null;refresh();$('eis-file-info').textContent=`${filename} · 正在读取…`;try{if(file.size>20*1024*1024)throw Error('文件超过 20 MB。');const text=await file.text();if(version!==token)return;raw=text;window.dispatchEvent(new CustomEvent('lsv-file-loaded',{detail:{file,text,rows:[],kind:'eis'}}));$('eis-file-info').textContent=filename;ingest();}catch(err){if(version===token){$('eis-file-info').textContent='读取失败';message(err.message);}}};
+window.addEventListener('lsv-project-open-eis',e=>{const {file,snapshot}=e.detail||{};if(!file)return;filename=file.originalName;raw=file.rawText||'';$('eis-file-info').textContent=`项目 · ${filename}`;left=right=focus=null;try{ingest();if(snapshot){left=snapshot.left??null;right=snapshot.right??null;focus=left;refresh();}}catch(err){message(err.message);}});
 $('eis-reparse').onclick=()=>{if(raw)ingest(true);else message('请先导入文件。');};
 $('eis-demo').onclick=()=>{token++;filename='EIS_demo.txt';raw='Frequency/Hz,Zreal/ohm,Zimag/ohm\n100000,4,2\n50000,6,-2\n10000,10,-8\n1000,20,-10\n100,30,-8\n10,34,-2\n1,36,2';$('eis-file-info').textContent=filename;ingest();};
 $('eis-clear').onclick=()=>{left=right=focus=null;message('已清除选择。');refresh();};
