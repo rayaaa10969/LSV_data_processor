@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const source = fileURLToPath(new URL('../dist/', import.meta.url));
-const files = ['index.html', 'style.css', 'app.mjs', 'core.mjs', 'eis.mjs', 'eis-core.mjs'];
+const files = ['index.html', 'style.css', 'app.mjs', 'project.mjs', 'core.mjs', 'eis.mjs', 'eis-core.mjs'];
 
 async function fixture(t, omitted) {
   const dir = await mkdtemp(path.join(tmpdir(), 'lsv-build-test-'));
@@ -24,7 +24,7 @@ test('Vercel 构建生成 v3 配置与完整静态文件，支持重复构建', 
   for (let i = 0; i < 2; i++) {
     const built = run();
     assert.equal(built.status, 0, built.stderr);
-    assert.match(built.stdout, /6 static files prepared/);
+    assert.match(built.stdout, /7 static files prepared/);
     const output = path.join(dir, '.vercel/output');
     assert.deepEqual(JSON.parse(await readFile(path.join(output, 'config.json'), 'utf8')), { version: 3 });
     assert.deepEqual((await readdir(path.join(output, 'static'))).sort(), [...files].sort());

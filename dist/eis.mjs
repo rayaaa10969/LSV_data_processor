@@ -1,9 +1,9 @@
 import {parseEIS,intersections,selectedResistance,eisGuidance} from './eis-core.mjs';
 const $=id=>document.getElementById(id), fmt=n=>n===null?'未确定':Number(n.toPrecision(8)).toString();
 let rows=[],points=[],left=null,right=null,focus=null,raw='',filename='',view=null,token=0;
-function page(eis){$('lsv-page').hidden=eis;$('eis-page').hidden=!eis;$('nav-lsv').setAttribute('aria-current',eis?'false':'page');$('nav-eis').setAttribute('aria-current',eis?'page':'false');if(eis)draw();}
-$('nav-lsv').onclick=$('eis-back').onclick=()=>page(false);
-$('nav-eis').onclick=$('open-eis').onclick=()=>page(true);page(false);
+function page(eis){const destination=eis?'eis':'lsv';window.dispatchEvent(new CustomEvent('app-page',{detail:destination}));if(eis)draw();}
+$('eis-back').onclick=()=>page(false);
+$('nav-eis').onclick=$('open-eis').onclick=()=>page(true);
 function message(text){$('eis-status').textContent=text;}
 function refresh(){
   let result;try{result=selectedResistance(points,left,right);}catch(e){message(e.message);return;}
