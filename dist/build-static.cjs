@@ -1,7 +1,7 @@
 // Run with Vercel Root Directory set to dist.
 const fs = require('node:fs');
 const path = require('node:path');
-const files = ['index.html', 'style.css', 'app.mjs', 'project.mjs', 'core.mjs', 'eis.mjs', 'eis-core.mjs'];
+const files = ['index.html', 'style.css', 'app.mjs', 'project.mjs', 'project-domain.mjs', 'core.mjs', 'eis.mjs', 'eis-core.mjs'];
 const destination = path.join(__dirname, '.vercel', 'output', 'static');
 for (const file of files) {
   if (!fs.statSync(path.join(__dirname, file)).isFile()) {
@@ -14,5 +14,5 @@ for (const file of files) {
   console.log(`Static output: ${file}`);
 }
 fs.writeFileSync(path.join(__dirname, '.vercel', 'output', 'config.json'), JSON.stringify({ version: 3 }));
-console.log('Vercel Build Output API v3: 7 static files prepared.');
+console.log('Vercel Build Output API v3: 8 static files prepared.');
 
